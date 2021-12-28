@@ -9,16 +9,18 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-HXTkYwN6U8xyxgFnj69nLSpbDCqWUWeSuqlZbquRD6o=";
   };
 
-  nativeBuildInputs = [ makeWrapper ];
-
   dontUnpack = true;
 
   installPhase = ''
-    install -Dm755 $src $out/bin/ktlint
-  '';
-
-  postFixup = ''
-    wrapProgram $out/bin/ktlint --prefix PATH : "${jre_headless}/bin"
+    install -Dm644 $src $out/lib/ktlint.jar
+    mkdir $out/bin
+    cat > $out/bin/ktlint << EOF
+    #!/bin/sh
+    ${jre_headless}/bin/java \
+      -Xmx512m --add-opens java.base/java.lang=ALL-UNNAMED \
+      -jar "$out/lib/ktlint.jar" "\$@"
+    EOF
+    chmod +x $out/bin/ktlint
   '';
 
   passthru.tests = {
